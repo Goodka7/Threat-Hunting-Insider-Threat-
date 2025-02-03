@@ -16,16 +16,9 @@ The objective is to detect and analyze the usage of outdated software with known
 
 ### High-Level IoC Discovery Plan
 
-- **Check `DeviceFileEvents`** for modifications to software installation files, directories, and configuration files related to outdated software:
-  - Look for downloads or modifications of software packages (e.g., `.tar.gz` files, installation directories).
-  - Check for changes to configuration files related to the outdated software (e.g., `/usr/local/apache2` for Apache).
-
-- **Check `DeviceProcessEvents`** for suspicious executions, including:
-  - Unauthorized execution of commands to silently install outdated software (e.g., `tar`, `make`, `./configure`, `make install`).
-  - Execution of outdated software itself (e.g., Apache starting with old, vulnerable versions).
-
-- **Check `DeviceNetworkEvents`** for any unusual network connections made by the outdated software or other suspicious activities:
-  - Look for network activity indicating software use (e.g., Apache making connections or receiving requests, especially from external IPs).
+- **Check `DeviceFileEvents`** for modifications to software installation files, directories, and configuration files related to outdated software.
+- **Check `DeviceProcessEvents`** for suspicious executions, including unauthorized system service modifications and Trojanized commands.
+- **Check `DeviceNetworkEvents`** for unusual network activity made by the outdated software or suspicious connections.
 
 ---
 
