@@ -2,8 +2,7 @@
 
 ## Steps the "Bad Actor" took to Create Logs and IoCs:
 
-1. Downloaded an Outdated Version of Vulnerable Software:
-- Downloaded the outdated version of Apache 2.4.39 from the official Apache archives to the local machine: `wget https://archive.apache.org/dist/httpd/httpd-2.4.39.tar.gz`
+1. Downloaded the outdated version of Apache 2.4.39 from the official Apache archives to the local machine: `wget https://archive.apache.org/dist/httpd/httpd-2.4.39.tar.gz`
 
 2. Install the outdated software silently:
 `tar -xzvf httpd-2.4.39.tar.gz
