@@ -1,6 +1,6 @@
 <img width="400" src="https://github.com/user-attachments/assets/c741101c-04f7-4115-90f3-77d677585dbd"/>
 
-# Threat Hunt Report: Unauthorized Persistence & Backdoor Creation
+# Threat Hunt Report: Insider Threat
 
 ## Platforms and Languages Leveraged
 - Linux (Ubuntu 22.04) Virtual Machines (Microsoft Azure)
@@ -16,9 +16,16 @@ The objective is to detect and analyze the usage of outdated software with known
 
 ### High-Level IoC Discovery Plan
 
-- **Check `DeviceFileEvents`** for modifications to `~/.ssh/authorized_keys`, systemd service files, and SUID binaries.
-- **Check `DeviceProcessEvents`** for suspicious executions, including unauthorized system service modifications and Trojanized commands.
-- **Check `DeviceLogonEvents`** for unusual remote login activity.
+- **Check `DeviceFileEvents`** for modifications to software installation files, directories, and configuration files related to outdated software:
+  - Look for downloads or modifications of software packages (e.g., `.tar.gz` files, installation directories).
+  - Check for changes to configuration files related to the outdated software (e.g., `/usr/local/apache2` for Apache).
+
+- **Check `DeviceProcessEvents`** for suspicious executions, including:
+  - Unauthorized execution of commands to silently install outdated software (e.g., `tar`, `make`, `./configure`, `make install`).
+  - Execution of outdated software itself (e.g., Apache starting with old, vulnerable versions).
+
+- **Check `DeviceNetworkEvents`** for any unusual network connections made by the outdated software or other suspicious activities:
+  - Look for network activity indicating software use (e.g., Apache making connections or receiving requests, especially from external IPs).
 
 ---
 
