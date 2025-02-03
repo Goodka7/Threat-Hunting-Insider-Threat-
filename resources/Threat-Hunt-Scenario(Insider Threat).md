@@ -12,7 +12,7 @@ cd httpd-2.4.39
 make
 sudo make install`
 
-3.Executed the Outdated Software:
+3. Executed the Outdated Software:
 - Started the Apache service to verify that it was functioning properly using:
 `sudo /usr/local/apache2/bin/apachectl start`
 
