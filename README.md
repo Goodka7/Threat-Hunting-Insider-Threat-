@@ -14,8 +14,6 @@ Management has raised concerns about a recent rise in threat actors targeting ou
 
 The objective is to detect and analyze the usage of outdated software with known vulnerabilities, assess the potential security risks across multiple systems, and ensure that all software being used within the organization is up to date and secure.
 
-### High-Level IoC Discovery Plan
-
 ## High-Level IoC Discovery Plan
 
 - **Check `DeviceFileEvents`** for modifications to software installation files, directories, and configuration files related to outdated software.
@@ -28,7 +26,7 @@ The objective is to detect and analyze the usage of outdated software with known
 
 ### 1. Searched the `DeviceProcessEvents` Table
 
-Searched for processes running on the network, looking for any machines that were running outdated versions. Discovered some suspicious traffic and narrowed the scope of the search down to pinpoint this traffic by `Timestamp`, found a suspicious process running on `DeviceName` "thlinux.p2zfvso05mlezjev3ck4vqd3kd.cx.internal.cloudapp.net" ran by `AccountName` "baddog".
+Searched for processes running on the network, looking for any machines that were running outdated versions of software. Some suspicious traffic was discovered and the scope of the search was narrowed down to pinpoint this traffic by `Timestamp`, a suspicious process running on `DeviceName` **"thlinux.p2zfvso05mlezjev3ck4vqd3kd.cx.internal.cloudapp.net"** ran by `AccountName` **"baddog"** was found.
 
 At **Feb 3, 2025 10:07:30 AM**, the user **"baddog"** executed the following command on the device **"thlinux.p2zfvso05mlezjev3ck4vqd3kd.cx.internal.cloudapp.net"**:
 ```
