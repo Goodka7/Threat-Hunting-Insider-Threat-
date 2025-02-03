@@ -17,8 +17,8 @@ The objective is to detect and analyze the usage of outdated software with known
 ## High-Level IoC Discovery Plan
 
 - **Check `DeviceProcessEvents`** for suspicious executions of outdated software or any software associated with known vulnerabilities.
-- **Check `DeviceFileEvents`** for modifications to software installation files, directories, and configuration files related to outdated software.
 - **Check `DeviceNetworkEvents`** for unusual network activity made by the outdated software or suspicious outbound connections.
+- **Check `DeviceFileEvents`** for modifications to software installation files, directories, and configuration files related to outdated software.
 
 ---
 
@@ -73,174 +73,110 @@ DeviceProcessEvents
 
 ---
 
-### 2. Searched the `DeviceLogonEvents` Table
+### 2. Searched the `DeviceNetworkEvents` Table
 
-Searched for any `AccountName` that was not "baddog" to detect unauthorized SSH logins.
+Searched for any events where the `DeviceName` was **"thlinux.p2zfvso05mlezjev3ck4vqd3kd.cx.internal.cloudapp.net"** and `AccountName` was **"baddog"** to detect unauthorized software downloads.
 
-At **Feb 2, 2025 3:15:01 PM**, the user **"root"** logged into the device **"thlinux.p2zfvso05mlezjev3ck4vqd3kd.cx.internal.cloudapp.net"** via **Network logon type**, indicating a remote SSH connection.
+At **Feb 3, 2025 10:07:05 AM**, the user **"baddog"** initiated the command: `wget https://archive.apache.org/dist/httpd/httpd-2.4.39.tar.gz`
 
-This suggests that a backdoor mechanism was used to gain unauthorized root access.
+This log further confirms that a outdated version of Apache HTTP Server was downloadead onto the device.
 
 **Query used to locate event:**
 
 ```kql
-DeviceLogonEvents
+DeviceNetworkEvents
 | where DeviceName == "thlinux.p2zfvso05mlezjev3ck4vqd3kd.cx.internal.cloudapp.net"
-| where AccountName != "baddog"  // Look for unexpected SSH logins
-| where LogonType in ("RemoteInteractive", "Network")
-| project Timestamp, DeviceName, AccountName, RemoteIP, LogonType
+| where InitiatingProcessAccountName == "baddog"
+| project Timestamp, DeviceName, InitiatingProcessAccountName, RemoteIP, RemotePort, RemoteUrl, InitiatingProcessFileName, InitiatingProcessCommandLine
+| order by Timestamp desc
 ```
-<img width="1212" alt="image" src="https://github.com/user-attachments/assets/c6eb0196-2d43-4f1f-bd9a-8b7acf6862cd">
+<img width="1212" alt="image" src="https://github.com/user-attachments/assets/145de6e0-1938-4540-8029-9e8903a4fdbc">
 
 ---
 
-### 3. Searched the `DeviceProcessEvents` Table for Malicious Systemd Service Execution
+### 3. Searched the `DeviceFileEvents` Table
 
-**Objective:** Detect the creation or execution of a malicious systemd service for persistence.
+Detect the creation or execution of a outdated and/or vulnerable version of software.
 
-At **Feb 2, 2025 3:12:10 PM**, the user **"baddog"** executed the following command on the device **"thlinux.p2zfvso05mlezjev3ck4vqd3kd.cx.internal.cloudapp.net"**:
+At **Feb 3, 2025 10:07:30 AM**, the user **"baddog"** executed the following command on the device **"thlinux.p2zfvso05mlezjev3ck4vqd3kd.cx.internal.cloudapp.net"**:
 ```
-sudo systemctl start malicious.service
-```
-
-This action started a malicious systemd service designed to maintain persistent access to the system.
-
-The service was created earlier by the user with the following command:
-```
-sudo nano /etc/systemd/system/malicious.service
+tar -xzvf httpd-2.4.39.tar.gz
 ```
 
-This confirms that the systemd service malicious.service was set up as a means of ensuring the attacker could regain access if necessary.
-
+This created a file in the path `/home/baddog/httpd-2.4.39/support/apachectl.in`, which shows that the outdated software was installed on the system. 
 
 **Query used to locate events:**
 
 ```kql
-DeviceProcessEvents
-| where DeviceName == "thlinux.p2zfvso05mlezjev3ck4vqd3kd.cx.internal.cloudapp.net"
-| where ProcessCommandLine contains "malicious.service"
-| project Timestamp, DeviceName, ActionType, ProcessCommandLine
+DeviceFileEvents
+| where FileName contains "httpd" or FileName contains "apache" or FileName contains "openssl" or FileName contains "tar" or FileName contains "rpm" or FileName contains "make"
+| where ActionType in ("FileModified", "FileCreated")
+| where InitiatingProcessAccountName == "baddog"
+| project Timestamp, DeviceName, InitiatingProcessAccountName, ActionType, FileName, FolderPath, SHA256, InitiatingProcessCommandLine
+| order by Timestamp desc
 ```
-<img width="1212" alt="image" src="https://github.com/user-attachments/assets/bab374b0-e90b-4c57-9689-a24fb506bf49">
+<img width="1212" alt="image" src="https://github.com/user-attachments/assets/d9d15ba4-2780-458d-9e39-004ca06f5e00">
 
 ---
 
-### 4. Searched the `DeviceProcessEvents` Table for Trojanized `ls` Execution
+## Chronological Event Timeline
 
-**Objective:** Detect the execution of a Trojanized script (`ls`) used to maintain unauthorized access.
+### 1. File Download - Outdated Software Installer
 
-At **Feb 2, 2025 4:00:13 PM**, the user **"baddog"** executed the following command on the device **"thlinux.p2zfvso05mlezjev3ck4vqd3kd.cx.internal.cloudapp.net"**:
-```
-~/.local/bin/ls
-```
-This command runs a Trojanized version of the `ls` utility, which was replaced by a script that attempts to establish a reverse shell connection back to the attacker's machine. This action indicates the attempt to maintain access by running malicious scripts under the guise of a common administrative command.
-
-**Query used to locate events:**
-
-```kql
-// Detect execution of Trojanized 'ls' command
-DeviceProcessEvents
-| where DeviceName == "thlinux.p2zfvso05mlezjev3ck4vqd3kd.cx.internal.cloudapp.net"
-| where ProcessCommandLine contains "/home/baddog/.local/bin/ls"
-| project Timestamp, DeviceName, AccountName, ActionType, ProcessCommandLine 
-```
-<img width="1212" alt="image" src="https://github.com/user-attachments/assets/505f75e4-e504-4865-87d9-1289d69ee748">
-
----
-
-## Chronological Event Timeline 
-
-### 1. File Download - SUID Backdoor Binary
-
-- **Time:** `Feb 2, 2025 3:54:17 PM`
-- **Event:** The user "baddog" downloaded and created a malicious backdoor binary (`/tmp/rootbash`) to be used for privilege escalation.
+- **Time:** `Feb 3, 2025 10:07:30 AM`
+- **Event:** The user "baddog" downloaded an outdated and vulnerable version of the Apache HTTP Server (`httpd-2.4.39.tar.gz`).
 - **Action:** File creation detected.
-- **File Path:** `/tmp/rootbash`
+- **File Path:** `/home/baddog/httpd-2.4.39.tar.gz`
 
-### 2. Process Execution - Privilege Escalation Attempt
+### 2. Process Execution - Extracting the Archive
 
-- **Time:** `Feb 2, 2025 3:54:17 PM`
-- **Event:** The user "baddog" executed the command `sudo chown root:root /tmp/rootbash` to set the ownership of the `/tmp/rootbash` binary to root for privilege escalation.
-- **Action:** Process creation detected.
-- **Command:** `sudo chown root:root /tmp/rootbash`
-- **File Path:** `/tmp/rootbash`
-
-### 3. Process Execution - Setting SUID on Backdoor Binary
-
-- **Time:** `Feb 2, 2025 3:55:22 PM`
-- **Event:** The user "baddog" executed the command `sudo chmod u+s /tmp/rootbash` to set the SUID on the backdoor binary, ensuring any user who executes it would gain root privileges.
-- **Action:** Process creation detected.
-- **Command:** `sudo chmod u+s /tmp/rootbash`
-- **File Path:** `/tmp/rootbash`
-
-### 4. Process Execution - SUID Backdoor Execution
-
-- **Time:** `Feb 2, 2025 3:56:18 PM`
-- **Event:** The user "baddog" executed the SUID backdoor binary `/tmp/rootbash`, confirming the escalation of privileges to root.
+- **Time:** `Feb 3, 2025 10:07:45 AM`
+- **Event:** The user "baddog" extracted the contents of the Apache HTTP Server archive (`httpd-2.4.39.tar.gz`), which included several outdated files that could be vulnerable.
 - **Action:** Process execution detected.
-- **Command:** `/tmp/rootbash -p`
-- **File Path:** `/tmp/rootbash`
+- **Command:** `tar -xzvf httpd-2.4.39.tar.gz`
+- **File Path:** `/home/baddog/httpd-2.4.39/`
 
-### 5. Additional Privilege Escalation Attempts
+### 3. Process Execution - Starting the Apache Service
 
-- **Time:** `Feb 2, 2025 3:57:45 PM`
-- **Event:** The user "baddog" executed additional processes related to privilege escalation, confirming continued use of the SUID backdoor for root access.
+- **Time:** `Feb 3, 2025 10:25:33 AM`
+- **Event:** The user "baddog" started the Apache HTTP server using the following command, activating an outdated and vulnerable version of the software.
 - **Action:** Process execution detected.
-- **Command:** `/tmp/rootbash`
-- **File Path:** `/tmp/rootbash`
+- **Command:** `sudo systemctl start apache2`
+- **File Path:** `/usr/local/apache2/`
 
-### 6. File Creation - Malicious Systemd Service
+### 4. File Creation - Installation Files
 
-- **Time:** `Feb 2, 2025 3:59:50 PM`
-- **Event:** The user "baddog" created a malicious systemd service called `malicious.service` to ensure persistent access through service execution.
-- **Action:** File creation detected.
-- **File Path:** `/etc/systemd/system/malicious.service`
+- **Time:** `Feb 3, 2025 10:07:30 AM`
+- **Event:** The user "baddog" created a directory for the outdated Apache software files (`httpd-2.4.39`).
+- **Action:** Directory creation detected.
+- **File Path:** `/home/baddog/httpd-2.4.39/`
 
-### 7. Process Execution - Starting Malicious Systemd Service
+### 5. Network Activity - Software Download
 
-- **Time:** `Feb 2, 2025 4:01:30 PM`
-- **Event:** The user "baddog" executed the command `sudo systemctl start malicious.service`, activating the malicious service to ensure the backdoor remains running.
-- **Action:** Process execution detected.
-- **Command:** `sudo systemctl start malicious.service`
-- **File Path:** `/etc/systemd/system/malicious.service`
-
-### 8. File Creation - Trojanized `ls` Command
-
-- **Time:** `Feb 2, 2025 4:05:42 PM`
-- **Event:** The user "baddog" created a Trojanized version of the `ls` command at `/home/baddog/.local/bin/ls`, which was used to maintain persistent access by executing a reverse shell upon being run.
-- **Action:** File creation detected.
-- **File Path:** `/home/baddog/.local/bin/ls`
-
-### 9. Process Execution - Trojanized `ls` Command Execution
-
-- **Time:** `Feb 2, 2025 4:06:05 PM`
-- **Event:** The user "baddog" executed the Trojanized `ls` command, which established a reverse shell connection back to the attacker's machine.
-- **Action:** Process execution detected.
-- **Command:** `/home/baddog/.local/bin/ls`
-- **File Path:** `/home/baddog/.local/bin/ls`
-
-### 10. Additional SUID Backdoor Execution
-
-- **Time:** `Feb 2, 2025 4:10:20 PM`
-- **Event:** The user "baddog" executed `/tmp/rootbash` again to confirm privilege escalation, ensuring continued root access on the system.
-- **Action:** Process execution detected.
-- **Command:** `/tmp/rootbash -p`
-- **File Path:** `/tmp/rootbash`
+- **Time:** `Feb 3, 2025 10:07:05 AM`
+- **Event:** The user "baddog" initiated the download of `httpd-2.4.39.tar.gz` from the internet, confirming that the outdated version of Apache HTTP Server was downloaded onto the device.
+- **Action:** Network request detected.
+- **Command:** `wget https://archive.apache.org/dist/httpd/httpd-2.4.39.tar.gz`
+- **Remote URL:** `https://archive.apache.org/dist/httpd/httpd-2.4.39.tar.gz`
 
 ---
 
 ## Summary
 
-The user "baddog" on the device "thlinux.p2zfvso05mlezjev3ck4vqd3kd.cx.internal.cloudapp.net" took deliberate actions to establish persistence and gain unauthorized root access. Initially, the attacker created a malicious backdoor binary (`/tmp/rootbash`) and modified its ownership to `root`. Following this, the attacker set the SUID permission on the binary, allowing any user to execute it with root privileges, effectively escalating their access. The attacker then executed the backdoor to confirm the privilege escalation.
+The user "baddog" on the device "thlinux.p2zfvso05mlezjev3ck4vqd3kd.cx.internal.cloudapp.net" unknowingly downloaded and installed an outdated version of the Apache HTTP Server (`httpd-2.4.39`), which contains several known vulnerabilities. The employee executed commands to extract and install the software, activating it on the system. Once the outdated version was installed, the Apache service was started.
 
-To ensure persistent access, the attacker created and enabled a **malicious systemd service** (`malicious.service`) which would automatically start the backdoor on system boot. Additionally, a **Trojanized `ls` command** was placed in the user's home directory (`~/.local/bin/ls`), which was executed to establish a reverse shell connection back to the attacker's machine.
+While the software was (probably) installed without malicious intent, its outdated nature and the associated vulnerabilities pose significant security risks. The use of this outdated version of Apache exposes the system to potential exploits by malicious actors targeting known vulnerabilities in this version.
 
-These actions suggest that the user "baddog" was attempting to establish a **backdoor and maintain persistent root access** on the system, bypassing security controls and potentially preparing for further unauthorized activities.
+These actions suggest that the employee inadvertently introduced a security risk by using outdated software, which could be exploited. Immediate action is required to update the software and mitigate any associated risks to the system.
 
 ---
 
 ## Response Taken
 
-Unauthorized root access and backdoor activities were confirmed on the endpoint **"thlinux.p2zfvso05mlezjev3ck4vqd3kd.cx.internal.cloudapp.net"** by the user **"baddog"**. The device was isolated, the backdoor and associated persistence mechanisms were disabled, and the user's direct manager was notified. Further investigation and remediation are underway to assess any potential data exfiltration or other malicious actions.
+The use of outdated software and the potential vulnerabilities introduced by the employee "baddog" on the endpoint **"thlinux.p2zfvso05mlezjev3ck4vqd3kd.cx.internal.cloudapp.net"** were confirmed. The device was immediately isolated from the network to prevent further risks. 
+
+I suggest the outdated version of Apache HTTP Server be removed or updated to the latest, secure version. The employee's direct manager was notified, and a recommendation was made to educate the employee on the importance of using up-to-date software and the risks associated with using outdated versions that may have known vulnerabilities.
+
+Further monitoring is being conducted to ensure that no unauthorized access or data exfiltration occurred during the period of exposure.
 
 ---
