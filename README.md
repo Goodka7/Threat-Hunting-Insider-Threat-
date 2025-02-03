@@ -16,57 +16,62 @@ The objective is to detect and analyze the usage of outdated software with known
 
 ### High-Level IoC Discovery Plan
 
+## High-Level IoC Discovery Plan
+
 - **Check `DeviceFileEvents`** for modifications to software installation files, directories, and configuration files related to outdated software.
-- **Check `DeviceProcessEvents`** for suspicious executions, including unauthorized system service modifications and Trojanized commands.
-- **Check `DeviceNetworkEvents`** for unusual network activity made by the outdated software or suspicious connections.
+- **Check `DeviceProcessEvents`** for suspicious executions of outdated software or any software associated with known vulnerabilities.
+- **Check `DeviceNetworkEvents`** for unusual network activity made by the outdated software or suspicious outbound connections.
 
 ---
 
 ## Steps Taken
 
-### 1. Searched the `DeviceProcessEvents` Table for SUID Backdoor Creation & Execution
+### 1. Searched the `DeviceProcessEvents` Table
 
-Identify unauthorized privilege escalation attempts and backdoor persistence through SUID manipulation.
+Searched for processes running on the network, looking for any machines that were running outdated versions. Discovered some suspicious traffic and narrowed the scope of the search down to pinpoint this traffic by `Timestamp`, found a suspicious process running on `DeviceName` "thlinux.p2zfvso05mlezjev3ck4vqd3kd.cx.internal.cloudapp.net" ran by `AccountName` "baddog".
 
-At **Feb 2, 2025 1:33:49 PM**, the user **"baddog"** executed the following command on the device **"thlinux.p2zfvso05mlezjev3ck4vqd3kd.cx.internal.cloudapp.net"**:
+At **Feb 3, 2025 10:07:30 AM**, the user **"baddog"** executed the following command on the device **"thlinux.p2zfvso05mlezjev3ck4vqd3kd.cx.internal.cloudapp.net"**:
 ```
-sh -c 'cat /proc/sys/kernel/random/uuid | awk -F- '{print $1$2$3$4$5}''
-```
-
-This command is commonly used to generate a unique identifier, possibly as part of a script used to automate privilege escalation or persistence.
-
-At **Feb 2, 2025 3:54:17 PM**, the user **"baddog"** executed the following command on the device **"thlinux.p2zfvso05mlezjev3ck4vqd3kd.cx.internal.cloudapp.net"**:
-```
-sudo chown root:root /tmp/rootbash
+wget https://archive.apache.org/dist/httpd/httpd-2.4.39.tar.gz
 ```
 
-Shortly after, at 3:55:22 PM, the user set the SUID permission to ensure persistent root access:
+This command downloads Apache HTTP Server 2.4.39, an outdated and vulnerable version of the Apache HTTP Server.
+
+At **Feb 3, 2025 10:25:33 AM**, the user **"baddog"** executed the following command on the device **"thlinux.p2zfvso05mlezjev3ck4vqd3kd.cx.internal.cloudapp.net"**:
 ```
-sudo chmod u+s /tmp/rootbash
+sudo systemctl start apache2
 ```
 
-Finally, at Feb 2, 2025 3:56:18 PM, the attacker executed:
-```
-/tmp/rootbash -p
-```
+This command starts the Apache HTTP Server service.
 
-This confirms the successful execution of the backdoor, allowing privilege escalation to root.
+This confirms the installation and execution of an outdated software, furthermore a version that has several well known vulnerabilites.
 
 **Query used to locate events:**
 
 ```kql
 DeviceProcessEvents
-| where DeviceName == "thlinux.p2zfvso05mlezjev3ck4vqd3kd.cx.internal.cloudapp.net"
-| where ProcessCommandLine contains "authorized_keys" or ProcessCommandLine contains "echo" or ProcessCommandLine contains "cat"
-| project Timestamp, DeviceName, ActionType, ProcessCommandLine
+| where ProcessCommandLine contains "tar" or ProcessCommandLine contains "make" or ProcessCommandLine contains "apt-get" 
+  or ProcessCommandLine contains "rpm" or ProcessCommandLine contains "wget" or ProcessCommandLine contains "curl"
+| project Timestamp, DeviceName, AccountName, ActionType, ProcessCommandLine
+| order by Timestamp desc
 
 DeviceProcessEvents
-| where DeviceName == "thlinux.p2zfvso05mlezjev3ck4vqd3kd.cx.internal.cloudapp.net"
-| where ProcessCommandLine contains "/tmp/rootbash"
+| where ProcessCommandLine contains "tar" or ProcessCommandLine contains "make" or ProcessCommandLine contains "apt-get" 
+  or ProcessCommandLine contains "rpm" or ProcessCommandLine contains "wget" or ProcessCommandLine contains "curl"
+| where Timestamp >= ago(2h) and Timestamp < ago(1h)
 | project Timestamp, DeviceName, AccountName, ActionType, ProcessCommandLine
+| order by Timestamp desc
+
+DeviceProcessEvents
+| where ProcessCommandLine contains "tar" or ProcessCommandLine contains "make" or ProcessCommandLine contains "apt-get" 
+  or ProcessCommandLine contains "rpm" or ProcessCommandLine contains "wget" or ProcessCommandLine contains "curl"
+| where AccountName == "baddog"
+| where Timestamp >= ago(2h) and Timestamp < ago(1h)
+| project Timestamp, DeviceName, AccountName, ActionType, ProcessCommandLine
+| order by Timestamp desc
 ```
-<img width="1212" alt="image" src="https://github.com/user-attachments/assets/3c1fabbb-7fc1-4978-a99c-763d777dc109">
-<img width="1212" alt="image" src="https://github.com/user-attachments/assets/cae6aeea-aa55-45e2-b0e4-e5d8b896dd84">
+
+<img width="1212" alt="image" src="https://github.com/user-attachments/assets/c09cb332-de6e-46da-927f-b1741da25298">
 
 ---
 
