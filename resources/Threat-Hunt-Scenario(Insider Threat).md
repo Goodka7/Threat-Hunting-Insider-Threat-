@@ -2,13 +2,24 @@
 
 ## Steps the "Bad Actor" took to Create Logs and IoCs:
 
-1. Download the outdated version of vulnerable software (e.g., **Apache**, **OpenSSL**, **FTP server**).
+1. Downloaded an Outdated Version of Vulnerable Software:
+- Downloaded the outdated version of Apache 2.4.39 from the official Apache archives to the local machine: `wget https://archive.apache.org/dist/httpd/httpd-2.4.39.tar.gz`
+
 2. Install the outdated software silently:
-`tar -xzvf apache-2.4.39.tar.gz
+`tar -xzvf httpd-2.4.39.tar.gz
+cd httpd-2.4.39
 ./configure --prefix=/usr/local/apache2
 make
 sudo make install`
-3. Run the outdated software and start the service to verify its functionality: `sudo /usr/local/apache2/bin/apachectl start`
+
+3.Executed the Outdated Software:
+- Started the Apache service to verify that it was functioning properly using:
+`sudo /usr/local/apache2/bin/apachectl start`
+
+4. Verified Apache is Running:
+- Checked the Apache service status and verified that it was working by accessing the local server and reviewing the logs:
+`ps aux | grep apache2
+tail -f /usr/local/apache2/logs/access_log`
 
 ## Tables Used to Detect IoCs:
 
