@@ -1,4 +1,4 @@
-<img width="400" src="https://github.com/user-attachments/assets/d07b1428-699a-4742-a480-d24309100e6f"/>
+<img width="400" src="https://github.com/user-attachments/assets/c741101c-04f7-4115-90f3-77d677585dbd"/>
 
 # Threat Hunt Report: Unauthorized Persistence & Backdoor Creation
 
