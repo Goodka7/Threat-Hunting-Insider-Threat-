@@ -15,8 +15,7 @@ sudo make install`
 - Started the Apache service to verify that it was functioning properly using:
 `sudo /usr/local/apache2/bin/apachectl start`
 
-4. Verified Apache is Running:
-- Checked the Apache service status and verified that it was working by accessing the local server and reviewing the logs:
+4. Verified the Apache service status and verified that it was working by accessing the local server and reviewing the logs:
 `ps aux | grep apache2
 tail -f /usr/local/apache2/logs/access_log`
 
