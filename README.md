@@ -119,45 +119,46 @@ DeviceFileEvents
 
 ---
 
-## Chronological Event Timeline
+### Chronological Event Timeline 
 
-### 1. File Download - Outdated Software Installer
+### 1. File Download - Outdated Software Downloaded
 
 - **Time:** `Feb 3, 2025 10:07:30 AM`
-- **Event:** The user "baddog" downloaded an outdated and vulnerable version of the Apache HTTP Server (`httpd-2.4.39.tar.gz`).
-- **Action:** File creation detected.
-- **File Path:** `/home/baddog/httpd-2.4.39.tar.gz`
+- **Event:** The employee "baddog" downloaded an outdated version of Apache HTTP Server (2.4.39) to the system.
+- **Action:** File download detected.
+- **File Path:** `httpd-2.4.39.tar.gz`
 
-### 2. Process Execution - Extracting the Archive
+### 2. Process Execution - Extracting the Software Archive
 
-- **Time:** `Feb 3, 2025 10:07:45 AM`
-- **Event:** The user "baddog" extracted the contents of the Apache HTTP Server archive (`httpd-2.4.39.tar.gz`), which included several outdated files that could be vulnerable.
+- **Time:** `Feb 3, 2025 10:07:30 AM`
+- **Event:** The employee executed the command to extract the downloaded Apache HTTP Server archive.
 - **Action:** Process execution detected.
 - **Command:** `tar -xzvf httpd-2.4.39.tar.gz`
-- **File Path:** `/home/baddog/httpd-2.4.39/`
+- **File Path:** `/home/baddog/httpd-2.4.39`
 
-### 3. Process Execution - Starting the Apache Service
+### 3. Process Execution - Configuring and Installing the Software
+
+- **Time:** `Feb 3, 2025 10:10:00 AM`
+- **Event:** The employee configured and installed the Apache HTTP Server.
+- **Action:** Process execution detected.
+- **Command:** `./configure --prefix=/usr/local/apache2 && make && sudo make install`
+- **File Path:** `/usr/local/apache2`
+
+### 4. Process Execution - Starting Apache Service
 
 - **Time:** `Feb 3, 2025 10:25:33 AM`
-- **Event:** The user "baddog" started the Apache HTTP server using the following command, activating an outdated and vulnerable version of the software.
+- **Event:** The employee started the Apache HTTP Server service.
 - **Action:** Process execution detected.
 - **Command:** `sudo systemctl start apache2`
-- **File Path:** `/usr/local/apache2/`
+- **File Path:** `/usr/local/apache2/bin/apachectl`
 
-### 4. File Creation - Installation Files
+### 5. Process Execution - Verifying Service Status
 
-- **Time:** `Feb 3, 2025 10:07:30 AM`
-- **Event:** The user "baddog" created a directory for the outdated Apache software files (`httpd-2.4.39`).
-- **Action:** Directory creation detected.
-- **File Path:** `/home/baddog/httpd-2.4.39/`
-
-### 5. Network Activity - Software Download
-
-- **Time:** `Feb 3, 2025 10:07:05 AM`
-- **Event:** The user "baddog" initiated the download of `httpd-2.4.39.tar.gz` from the internet, confirming that the outdated version of Apache HTTP Server was downloaded onto the device.
-- **Action:** Network request detected.
-- **Command:** `wget https://archive.apache.org/dist/httpd/httpd-2.4.39.tar.gz`
-- **Remote URL:** `https://archive.apache.org/dist/httpd/httpd-2.4.39.tar.gz`
+- **Time:** `Feb 3, 2025 10:26:00 AM`
+- **Event:** The employee attempted to verify the status of the Apache service.
+- **Action:** Process execution detected.
+- **Command:** `sudo systemctl status apache2`
+- **File Path:** `/usr/local/apache2/bin/apachectl`
 
 ---
 
