@@ -16,8 +16,8 @@ The objective is to detect and analyze the usage of outdated software with known
 
 ## High-Level IoC Discovery Plan
 
-- **Check `DeviceFileEvents`** for modifications to software installation files, directories, and configuration files related to outdated software.
 - **Check `DeviceProcessEvents`** for suspicious executions of outdated software or any software associated with known vulnerabilities.
+- **Check `DeviceFileEvents`** for modifications to software installation files, directories, and configuration files related to outdated software.
 - **Check `DeviceNetworkEvents`** for unusual network activity made by the outdated software or suspicious outbound connections.
 
 ---
