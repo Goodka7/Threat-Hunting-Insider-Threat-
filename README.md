@@ -1,7 +1,7 @@
 <img width="400" src="https://github.com/user-attachments/assets/c741101c-04f7-4115-90f3-77d677585dbd"/>
 
 # Threat Hunt Report: Insider Threat
-- [Scenario Creation](https://github.com/Goodka7/Threat-Hunting-Persistence-/blob/main/resources/Threat-Hunt-Event(Insider-Threat).md)
+- [Scenario Creation](https://github.com/Goodka7/Threat-Hunting-Insider-Threat-/blob/main/resources/Threat-Hunt-Scenario(Insider%20Threat).md)
   
 ## Platforms and Languages Leveraged
 - Linux (Ubuntu 22.04) Virtual Machines (Microsoft Azure)
